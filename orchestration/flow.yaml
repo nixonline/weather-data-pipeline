@@ -1,0 +1,13 @@
+id: weather-pipeline
+namespace: dev
+
+tasks:
+  - id: extract
+    type: io.kestra.plugin.docker.Run
+    containerImage: extractor:latest
+
+  - id: transform
+    type: io.kestra.plugin.docker.Run
+    containerImage: transformer:latest
+    dependsOn:
+      - extract
