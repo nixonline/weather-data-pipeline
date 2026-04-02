@@ -13,3 +13,7 @@ __pycache__/
 
 # Env files
 .env
+
+# Generated pipeline artifacts
+logs/
+output/

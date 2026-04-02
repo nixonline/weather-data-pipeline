@@ -6,4 +6,4 @@ COPY shared/ /app/shared/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "weather_extractor.py"]
+ENTRYPOINT ["python", "weather_extractor.py"]

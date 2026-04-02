@@ -212,6 +212,7 @@ class WeatherExtractor:
                 file_record[0]["log_upload_error"] = str(log_error)
 
             cleanup_local_folder(output_dir)
+            cleanup_local_folder("logs")
             return file_record
 
         except Exception as e:
