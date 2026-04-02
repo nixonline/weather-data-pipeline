@@ -1,4 +1,4 @@
-id: weather-pipeline
+id: weather-data-pipeline
 namespace: dev
 
 tasks:

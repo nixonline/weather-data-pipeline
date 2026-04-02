@@ -1,0 +1,88 @@
+request_settings:
+  connect_timeout_seconds: 10
+  read_timeout_seconds: 30
+  delay_between_requests_seconds: 0.3
+  retry_total: 3
+  retry_backoff_factor: 1
+  retry_statuses:
+    - 429
+    - 500
+    - 502
+    - 503
+    - 504
+
+cities:
+  # Philippines
+  Manila:
+    country: Philippines
+    lat: 14.5995
+    lon: 120.9842
+    tz: Asia/Manila
+  Cebu:
+    country: Philippines
+    lat: 10.3157
+    lon: 123.8854
+    tz: Asia/Manila
+  Davao:
+    country: Philippines
+    lat: 7.1907
+    lon: 125.4553
+    tz: Asia/Manila
+
+  # Singapore
+  Singapore:
+    country: Singapore
+    lat: 1.3521
+    lon: 103.8198
+    tz: Asia/Singapore
+
+  # Malaysia
+  Kuala Lumpur:
+    country: Malaysia
+    lat: 3.1390
+    lon: 101.6869
+    tz: Asia/Kuala_Lumpur
+  George Town:
+    country: Malaysia
+    lat: 5.4141
+    lon: 100.3288
+    tz: Asia/Kuala_Lumpur
+  Johor Bahru:
+    country: Malaysia
+    lat: 1.4927
+    lon: 103.7414
+    tz: Asia/Kuala_Lumpur
+
+  # Thailand
+  Bangkok:
+    country: Thailand
+    lat: 13.7563
+    lon: 100.5018
+    tz: Asia/Bangkok
+  Chiang Mai:
+    country: Thailand
+    lat: 18.7883
+    lon: 98.9853
+    tz: Asia/Bangkok
+  Phuket:
+    country: Thailand
+    lat: 7.8804
+    lon: 98.3923
+    tz: Asia/Bangkok
+
+  # Vietnam
+  Hanoi:
+    country: Vietnam
+    lat: 21.0285
+    lon: 105.8542
+    tz: Asia/Bangkok
+  Ho Chi Minh City:
+    country: Vietnam
+    lat: 10.8231
+    lon: 106.6297
+    tz: Asia/Bangkok
+  Da Nang:
+    country: Vietnam
+    lat: 16.0544
+    lon: 108.2022
+    tz: Asia/Bangkok
