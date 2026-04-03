@@ -4,4 +4,6 @@ WORKDIR /app/transformer
 COPY transformer/ /app/transformer/
 COPY shared/ /app/shared/
 
-CMD ["python", "transform.py"]
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENTRYPOINT ["python", "weather_transformer.py"]

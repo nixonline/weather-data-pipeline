@@ -1,17 +1,13 @@
 import os
 import sys
 import json
-import time
 import yaml
 import logging
-import requests
 import pandas as pd
 from datetime import datetime, UTC
 from dotenv import load_dotenv
 from google.cloud import storage
 from google.oauth2 import service_account
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 # Resolve imports from the project root so shared modules are loaded consistently.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +15,9 @@ ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from shared.gcp import upload_log_to_gcs, download_weather_data
+PROJECT_ID = "weather-data-etl-491716"
+
+from shared.gcp import download_weather_data, upsert_transformed_weather_to_bq
 from shared.utils import load_files_and_append_to_df, parse_args, resolve_dates, save_run_log, cleanup_local_folder, apply_schema_dtypes
 
 
@@ -75,6 +73,7 @@ class WeatherTransformer:
             config = config or {}
             self.weather_conditions = config.get("weather_conditions", {})
             self.schema = config.get("schema", {})
+            self.columns_to_exclude = config.get("columns_to_exclude", [])
             self.logger.info(f"Loaded {len(self.weather_conditions)} weather conditions from config.")
             self.logger.info(f"Loaded schema with {len(self.schema)} columns.")
         except Exception as e:
@@ -86,21 +85,25 @@ class WeatherTransformer:
         Transforms raw weather data by mapping condition codes to descriptions and adding rolling averages.
         
         Args:
-            load_historic: If True, loads all historical data. If False, loads last 7 days for rolling averages.
+            load_historic: If True, download all historical files. If False, download top 7 files.
         Returns:
             pd.DataFrame: Transformed weather data with weather_desc and rolling average columns.
         """
-        local_dir = f"{self.root_dir}\gcs_data"
+        local_dir = os.path.join(self.root_dir, "gcs_data")
 
         # Always load full history to ensure we have 7 days for rolling calculations
         download_weather_data(
             bucket_name=self.bucket_name, 
             blob_prefix="daily/", 
             local_dir=local_dir, 
-            load_historic=True
+            load_historic=load_historic
         )
 
         df_weather = load_files_and_append_to_df(local_dir)
+        
+        if df_weather.empty:
+            self.logger.warning("No weather data found.")
+            return df_weather
 
         # Apply schema dtypes (handles all conversions including datetime)
         df_weather = apply_schema_dtypes(df_weather, self.schema)
@@ -116,7 +119,10 @@ class WeatherTransformer:
         )
 
         # Adding weather description based on codes
-        df_weather["weather_desc"] = df_weather["weather_code"].map(self.weather_conditions)
+        if "weather_code" in df_weather.columns:
+            df_weather["weather_desc"] = df_weather["weather_code"].map(self.weather_conditions)
+        else:
+            self.logger.warning("weather_code column not found in data.")
 
         # Calculate rolling averages for temperature by city after deduplication
         # Sort by city and date for proper rolling calculations
@@ -133,14 +139,33 @@ class WeatherTransformer:
                     df_weather.groupby("city")[col].rolling(window=7, min_periods=1).mean().reset_index(0, drop=True)
                 )
 
+        # Remove columns not in schema
+        schema_columns = list(self.schema.keys())
+        schema_columns = [col for col in schema_columns if col not in self.columns_to_exclude]
+        df_weather = df_weather[[col for col in schema_columns if col in df_weather.columns]]
+        
+        # Convert date column to date-only (remove time)
+        if "date" in df_weather.columns:
+            df_weather["date"] = pd.to_datetime(df_weather["date"]).dt.date
+        
+        # Round all float columns to 2 decimal places
+        float_cols = df_weather.select_dtypes(include=['float64', 'float32']).columns
+        for col in float_cols:
+            df_weather[col] = df_weather[col].round(2)
+
+        cleanup_local_folder(local_dir)
+
         return df_weather
 
 if __name__ == "__main__":
     args = parse_args(description="Weather Data Transformer")
-    extractor = WeatherTransformer()
+
+    transformer = WeatherTransformer()
     
-    results = extractor.transform(
+    results = transformer.transform(
         load_historic=args.load_historic
     )
     
-    print("cat")
+    table_id = f"{PROJECT_ID}.weather_dataset.daily_weather"
+    bq_result = upsert_transformed_weather_to_bq(results, table_id)
+    transformer.logger.info(f"\nBigQuery Upsert Result: {bq_result}")

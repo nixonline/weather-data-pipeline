@@ -38,3 +38,6 @@ schema:
   weather_code: int64
   weather_desc: object
   precipitation: float
+
+columns_to_exclude:
+  - extracted_at
