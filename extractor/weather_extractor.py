@@ -200,7 +200,7 @@ class WeatherExtractor:
                 "rows": len(df),
                 "distinct_dates": df["date"].nunique(),
                 "distinct_cities": df["city"].nunique(),
-                "user": os.getenv("USER", "unknown"),
+                "user": os.getenv("USER") or os.getenv("USERNAME") or "unknown",
                 "status": "uploaded"
             }]
             
@@ -216,7 +216,8 @@ class WeatherExtractor:
                 file_record[0]["log_upload_error"] = str(log_error)
 
             logs_table_id = f"{PROJECT_ID}.logs.extract"
-            upsert_run_logs_to_bq(file_record, logs_table_id)
+            bq_log_result = upsert_run_logs_to_bq(file_record, logs_table_id)
+            self.logger.info(f"BigQuery log upsert result: {bq_log_result}")
 
             cleanup_local_folder(output_dir)
             cleanup_local_folder("logs")
