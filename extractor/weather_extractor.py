@@ -220,7 +220,7 @@ class WeatherExtractor:
             raise
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_args(description="Weather Data Extractor")
     extractor = WeatherExtractor()
     
     results = extractor.extract(
