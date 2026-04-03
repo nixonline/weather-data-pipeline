@@ -161,11 +161,14 @@ if __name__ == "__main__":
     args = parse_args(description="Weather Data Transformer")
 
     transformer = WeatherTransformer()
-    
+
     results = transformer.transform(
         load_historic=args.load_historic
     )
-    
-    table_id = f"{PROJECT_ID}.weather_dataset.daily_weather"
-    bq_result = upsert_transformed_weather_to_bq(results, table_id)
-    transformer.logger.info(f"\nBigQuery Upsert Result: {bq_result}")
+
+    if results.empty:
+        transformer.logger.warning("No transformed data to upsert to BigQuery.")
+    else:
+        table_id = f"{PROJECT_ID}.weather_dataset.daily_weather"
+        bq_result = upsert_transformed_weather_to_bq(results, table_id)
+        transformer.logger.info(f"\nBigQuery Upsert Result: {bq_result}")

@@ -5,3 +5,4 @@ python-dotenv
 pyyaml
 requests
 google-cloud-storage
+google-cloud-bigquery
