@@ -16,10 +16,12 @@ from urllib3.util.retry import Retry
 # Resolve imports from the project root so shared modules are loaded consistently.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+PROJECT_ID = "weather-data-etl-491716"
+
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-from shared.gcp import upload_log_to_gcs
+from shared.gcp import upload_to_gcs, upsert_run_logs_to_bq
 from shared.utils import parse_args, resolve_dates, save_run_log, cleanup_local_folder
 
 
@@ -189,20 +191,22 @@ class WeatherExtractor:
             self.logger.info(f"Saved {len(df)} rows to {file_name}")
 
             blob_path = f"daily/{file_name}"
-            blob = self.gcs_client.bucket(self.bucket_name).blob(blob_path)
-            blob.upload_from_filename(file_path)
+            upload_to_gcs(self.bucket_name, file_path, blob_path)
             self.logger.info(f"Uploaded to gs://{self.bucket_name}/{blob_path}")
 
             file_record = [{
                 "run_ts": run_ts_str,
                 "file_name": file_name,
                 "rows": len(df),
+                "distinct_dates": df["date"].nunique(),
+                "distinct_cities": df["city"].nunique(),
+                "user": os.getenv("USER") or os.getenv("USERNAME") or "unknown",
                 "status": "uploaded"
             }]
             
             log_file = save_run_log(file_record)
             try:
-                upload_log_to_gcs(log_file, self.bucket_name)
+                upload_to_gcs(self.bucket_name, log_file, f"logs/{os.path.basename(log_file)}")
                 self.logger.info(
                     f"Uploaded run log to gs://{self.bucket_name}/logs/{os.path.basename(log_file)}"
                 )
@@ -210,6 +214,10 @@ class WeatherExtractor:
                 self.logger.error(f"CSV uploaded, but failed to upload run log: {log_error}")
                 file_record[0]["log_upload_status"] = "failed"
                 file_record[0]["log_upload_error"] = str(log_error)
+
+            logs_table_id = f"{PROJECT_ID}.logs.extract"
+            bq_log_result = upsert_run_logs_to_bq(file_record, logs_table_id)
+            self.logger.info(f"BigQuery log upsert result: {bq_log_result}")
 
             cleanup_local_folder(output_dir)
             cleanup_local_folder("logs")
@@ -220,7 +228,7 @@ class WeatherExtractor:
             raise
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_args(description="Weather Data Extractor")
     extractor = WeatherExtractor()
     
     results = extractor.extract(

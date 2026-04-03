@@ -23,3 +23,21 @@ weather_conditions: {
   96: "Thunderstorm with hail",
   99: "Severe thunderstorm with hail"
 }
+
+schema:
+  city: object
+  country: object
+  date: datetime64[ns]
+  extracted_at: datetime64[ns]
+  temp_max: float
+  temp_min: float
+  temp_max_3day_avg: float
+  temp_min_3day_avg: float
+  temp_max_7day_avg: float
+  temp_min_7day_avg: float
+  weather_code: int64
+  weather_desc: object
+  precipitation: float
+
+columns_to_exclude:
+  - extracted_at

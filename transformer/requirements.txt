@@ -1,9 +1,7 @@
 pandas
 numpy
-openmeteo_requests
 python-dotenv
 pyyaml
-requests
 google-cloud-storage
 google-cloud-bigquery
 pyarrow
