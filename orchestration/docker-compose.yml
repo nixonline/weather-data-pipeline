@@ -1,29 +1,64 @@
+volumes:
+  postgres_data:
+  kestra_storage:
+
 services:
+  postgres:
+    image: postgres:18
+    container_name: weather-kestra-postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${KESTRA_POSTGRES_DB}
+      POSTGRES_USER: ${KESTRA_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${KESTRA_POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
   kestra:
     image: kestra/kestra:latest-lts
     container_name: weather-kestra
     user: root
+    stop_grace_period: 6m
+    command: server standalone
     ports:
       - "8080:8080"
+      - "8081:8081"
     volumes:
       - kestra_storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - ./flows:/app/flows
-      - /tmp:/tmp
+      - /tmp/kestra-wd:/tmp/kestra-wd
     environment:
+      ENV_EXTRACTOR_IMAGE: ${EXTRACTOR_IMAGE}
+      ENV_TRANSFORMER_IMAGE: ${TRANSFORMER_IMAGE}
       ENV_GCS_BUCKET: ${GCS_BUCKET}
       ENV_GCP_SERVICE_KEY: ${GCP_SERVICE_KEY}
       KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/${KESTRA_POSTGRES_DB}
+            driverClassName: org.postgresql.Driver
+            username: "${KESTRA_POSTGRES_USER}"
+            password: "${KESTRA_POSTGRES_PASSWORD}"
         kestra:
+          server:
+            basic-auth:
+              enabled: true
+              username: "${KESTRA_ADMIN_EMAIL}"
+              password: "${KESTRA_ADMIN_PASSWORD}"
           url: http://localhost:8080/
+          repository:
+            type: postgres
           storage:
             type: local
             local:
               base-path: /app/storage
           queue:
-            type: h2
-          repository:
-            type: h2
+            type: postgres
           tasks:
             tmp-dir:
               path: /tmp/kestra-wd/tmp
@@ -35,7 +70,6 @@ services:
               enabled: true
               paths:
                 - /app/flows
-    command: server local
-
-volumes:
-  kestra_storage:
+    depends_on:
+      postgres:
+        condition: service_healthy

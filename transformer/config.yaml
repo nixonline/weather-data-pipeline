@@ -37,7 +37,8 @@ schema:
   temp_min_7day_avg: float
   weather_code: int64
   weather_desc: object
-  precipitation: float
+  precip_sum: float
+  precip_prob_max: float
 
 columns_to_exclude:
   - extracted_at
