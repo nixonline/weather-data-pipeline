@@ -30,7 +30,8 @@ class WeatherTransformer:
 
         logging.basicConfig(
             level=logging.INFO, 
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            stream=sys.stdout
         )
         self.logger = logging.getLogger(__name__)
 

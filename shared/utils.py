@@ -3,7 +3,10 @@ import argparse
 import json
 import shutil
 import os
+import logging
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 def parse_args(description="Weather Data Pipeline"):
     """
@@ -24,7 +27,10 @@ def parse_args(description="Weather Data Pipeline"):
     parser.add_argument("--start-date", type=str)
     parser.add_argument("--end-date", type=str)
 
-    return parser.parse_args()
+    # Kestra may pass empty-string command arguments when optional inputs are omitted.
+    # Filter those out so argparse only sees real flags/values.
+    argv = [arg for arg in os.sys.argv[1:] if str(arg).strip()]
+    return parser.parse_args(argv)
 
 def resolve_dates(load_historic, start_date, end_date):
     """
@@ -69,7 +75,9 @@ def resolve_dates(load_historic, start_date, end_date):
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
         end = end + timedelta(days=7)  # extend to forecast window
     else:
-        raise ValueError("end_date is required if start_date is provided")
+        # If only start_date is provided, backfill from that date through the
+        # current forecast horizon.
+        end = base_date + timedelta(days=7)
 
     if start > end:
         raise ValueError("start_date cannot be after end_date")
@@ -111,7 +119,7 @@ def load_files_and_append_to_df(folder_path):
             all_files.append(file_path)
 
     if not all_files:
-        print(f"Error: No CSV files found in {folder_path}")
+        logger.warning(f"No CSV files found in {folder_path}")
         return pd.DataFrame()
 
     df = pd.concat((pd.read_csv(f, dtype="str") for f in all_files), ignore_index=True)
@@ -138,6 +146,6 @@ def apply_schema_dtypes(df, schema):
                 else:
                     df[col] = df[col].astype(dtype)
             except Exception as e:
-                print(f"Warning: Could not convert column '{col}' to dtype '{dtype}': {str(e)}")
+                logger.warning(f"Could not convert column '{col}' to dtype '{dtype}': {str(e)}")
     
     return df
