@@ -40,7 +40,23 @@ tasks:
     serviceAccount: "{{ envs.gcp_service_key }}"
     projectId: weather-data-etl-491716
     sql: |
-      CREATE OR REPLACE TABLE `weather-data-etl-491716.weather_dataset.weather_dates` AS
-      SELECT DISTINCT date
-      FROM `weather-data-etl-491716.weather_dataset.daily_weather`
-      ORDER BY date
+      WITH base AS (
+        SELECT DISTINCT date 
+        FROM `weather-data-etl-491716.weather_dataset.daily_weather`
+      )
+
+      SELECT
+        date,
+        EXTRACT(YEAR FROM date) AS year_number,
+        EXTRACT(MONTH FROM date) AS month_number,
+        EXTRACT(DAY FROM date) AS day_of_month,
+        EXTRACT(QUARTER FROM date) AS quarter_number,
+        FORMAT_DATE('%m/%d/%y', date) AS date_short,
+        FORMAT_DATE('%B', date) AS month_name,
+        FORMAT_DATE('%b', date) AS month_name_short,
+        FORMAT_DATE('%A', date) AS day_name,
+        CASE WHEN EXTRACT(DAYOFWEEK FROM date) IN (1, 7) THEN 'Weekend' ELSE 'Weekday' END AS day_type,
+        FORMAT_DATE('%Y-%m', date) AS year_month_key,
+        EXTRACT(ISOWEEK FROM date) AS iso_week_number
+      FROM base
+      ORDER BY date DESC
