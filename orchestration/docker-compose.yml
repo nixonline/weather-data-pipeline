@@ -7,7 +7,7 @@ services:
     image: postgres:18
     container_name: weather-kestra-postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${KESTRA_POSTGRES_DB}
       POSTGRES_USER: ${KESTRA_POSTGRES_USER}
