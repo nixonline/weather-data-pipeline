@@ -28,6 +28,27 @@ In the Kestra UI, run:
 
 Kestra will pass `GCS_BUCKET` and `GCP_SERVICE_KEY` from your root `.env` into both containers.
 
+## Local and production flows
+
+Two flow variants are available:
+
+- `dev.weather-data-pipeline`
+  - Uses local Docker images: `extractor:latest` and `transformer:latest`
+- `prod.weather-data-pipeline`
+  - Uses image names provided by Kestra environment variables:
+    - `ENV_EXTRACTOR_IMAGE`
+    - `ENV_TRANSFORMER_IMAGE`
+
+For a deployed VM, set those environment variables to your Artifact Registry image URLs.
+In the VM `.env`, define:
+
+```env
+EXTRACTOR_IMAGE=asia-southeast1-docker.pkg.dev/<project>/<repo>/extractor:latest
+TRANSFORMER_IMAGE=asia-southeast1-docker.pkg.dev/<project>/<repo>/transformer:latest
+GCS_BUCKET=your-bucket
+GCP_SERVICE_KEY={"type":"service_account",...}
+```
+
 ## Notes
 
 - This setup is for local development only.

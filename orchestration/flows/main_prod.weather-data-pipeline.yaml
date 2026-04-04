@@ -1,0 +1,46 @@
+id: weather-data-pipeline
+namespace: prod
+
+inputs:
+  - id: load_historic
+    type: BOOL
+    defaults: false
+  - id: start_date
+    type: STRING
+    required: false
+  - id: end_date
+    type: STRING
+    required: false
+
+tasks:
+  - id: extract
+    type: io.kestra.plugin.docker.Run
+    containerImage: "{{ envs.extractor_image }}"
+    pullPolicy: ALWAYS
+    env:
+      GCS_BUCKET: "{{ envs.gcs_bucket }}"
+      GCP_SERVICE_KEY: "{{ envs.gcp_service_key }}"
+    commands:
+      - "{{ inputs.load_historic ? '--load-historic' : '' }}"
+      - "{{ inputs.start_date ? '--start-date=' ~ inputs.start_date : '' }}"
+      - "{{ inputs.end_date ? '--end-date=' ~ inputs.end_date : '' }}"
+
+  - id: transform
+    type: io.kestra.plugin.docker.Run
+    containerImage: "{{ envs.transformer_image }}"
+    pullPolicy: ALWAYS
+    env:
+      GCS_BUCKET: "{{ envs.gcs_bucket }}"
+      GCP_SERVICE_KEY: "{{ envs.gcp_service_key }}"
+    commands:
+      - "{{ inputs.load_historic ? '--load-historic' : '' }}"
+
+  - id: create_weather_dates_table
+    type: io.kestra.plugin.gcp.bigquery.Query
+    serviceAccount: "{{ envs.gcp_service_key }}"
+    projectId: weather-data-etl-491716
+    sql: |
+      CREATE OR REPLACE TABLE `weather-data-etl-491716.weather_dataset.weather_dates` AS
+      SELECT DISTINCT date
+      FROM `weather-data-etl-491716.weather_dataset.daily_weather`
+      ORDER BY date
