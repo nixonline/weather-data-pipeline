@@ -14,7 +14,7 @@ docker build -t transformer:latest -f transformer/Dockerfile .
 From the `orchestration` folder:
 
 ```powershell
-docker compose up -d
+docker compose --env-file ../.env up -d
 ```
 
 Open `http://localhost:8080`.

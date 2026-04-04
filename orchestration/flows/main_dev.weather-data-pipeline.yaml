@@ -3,7 +3,7 @@ namespace: dev
 
 inputs:
   - id: load_historic
-    type: BOOLEAN
+    type: BOOL
     defaults: false
   - id: start_date
     type: STRING

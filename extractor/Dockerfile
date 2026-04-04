@@ -1,9 +1,13 @@
 FROM python:3.11-slim
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
 WORKDIR /app/extractor
+
 COPY extractor/ /app/extractor/
 COPY shared/ /app/shared/
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-compile -r requirements.txt
 
-ENTRYPOINT ["python", "weather_extractor.py"]
+ENTRYPOINT ["python", "/app/extractor/weather_extractor.py"]
