@@ -63,9 +63,9 @@ Main flows:
 Demo-friendly flows:
 
 - `dev.weather-data-extract`
-- `dev.transform-only`
-- `prod.extract-only`
-- `prod.transform-only`
+- `dev.weather-data-transform`
+- `prod.weather-data-extract`
+- `prod.weather-data-transform`
 
 The production flow uses Artifact Registry images and explicit registry credentials so Kestra can pull images from GCP.
 
@@ -137,8 +137,8 @@ Log in with:
 In the Kestra UI, use the `dev` namespace and run one of:
 
 - `dev.weather-data-pipeline`
-- `dev.weather-extract`
-- `dev.weather-transform`
+- `dev.weather-data-extract`
+- `dev.weather-data-transform`
 
 ### 2. Deploy to Production
 
@@ -213,8 +213,8 @@ Log in with:
 In the Kestra UI, use the `prod` namespace and run one of:
 
 - `prod.weather-data-pipeline`
-- `prod.weather-extract`
-- `prod.weather-transform`
+- `prod.weather-data-extract`
+- `prod.weather-data-transform`
 
 #### Step 8: update the deployment
 

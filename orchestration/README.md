@@ -34,17 +34,17 @@ Flow variants are available for both full-pipeline and demo runs:
 
 - `dev.weather-data-pipeline`
   - Uses local Docker images: `extractor:latest` and `transformer:latest`
-- `dev.extract-only`
+- `dev.weather-data-extract`
   - Runs only the extractor with local Docker image `extractor:latest`
-- `dev.transform-only`
+- `dev.weather-data-transform`
   - Runs only the transformer with local Docker image `transformer:latest`
 - `prod.weather-data-pipeline`
   - Uses image names provided by Kestra environment variables:
     - `ENV_EXTRACTOR_IMAGE`
     - `ENV_TRANSFORMER_IMAGE`
-- `prod.extract-only`
+- `prod.weather-data-extract`
   - Runs only the extractor using the configured Artifact Registry image
-- `prod.transform-only`
+- `prod.weather-data-transform`
   - Runs only the transformer using the configured Artifact Registry image
 
 For a deployed VM, set those environment variables to your Artifact Registry image URLs.
