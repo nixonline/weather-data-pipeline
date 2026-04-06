@@ -1,0 +1,48 @@
+id: weather-data-transform
+namespace: prod
+
+inputs:
+  - id: load_historic
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: transform
+    type: io.kestra.plugin.docker.Run
+    containerImage: "{{ envs.transformer_image }}"
+    pullPolicy: ALWAYS
+    credentials:
+      registry: asia-southeast1-docker.pkg.dev
+      username: _json_key
+      password: "{{ envs.gcp_service_key }}"
+    env:
+      GCS_BUCKET: "{{ envs.gcs_bucket }}"
+      GCP_SERVICE_KEY: "{{ envs.gcp_service_key }}"
+    commands:
+      - "{{ inputs.load_historic ? '--load-historic' : '' }}"
+
+  - id: create_weather_dates_table
+    type: io.kestra.plugin.gcp.bigquery.Query
+    serviceAccount: "{{ envs.gcp_service_key }}"
+    projectId: weather-data-etl-491716
+    sql: |
+      WITH base AS (
+        SELECT DISTINCT date 
+        FROM `weather-data-etl-491716.weather_dataset.daily_weather`
+      )
+
+      SELECT
+        date,
+        EXTRACT(YEAR FROM date) AS year_number,
+        EXTRACT(MONTH FROM date) AS month_number,
+        EXTRACT(DAY FROM date) AS day_of_month,
+        EXTRACT(QUARTER FROM date) AS quarter_number,
+        FORMAT_DATE('%m/%d/%y', date) AS date_short,
+        FORMAT_DATE('%B', date) AS month_name,
+        FORMAT_DATE('%b', date) AS month_name_short,
+        FORMAT_DATE('%A', date) AS day_name,
+        CASE WHEN EXTRACT(DAYOFWEEK FROM date) IN (1, 7) THEN 'Weekend' ELSE 'Weekday' END AS day_type,
+        FORMAT_DATE('%Y-%m', date) AS year_month_key,
+        EXTRACT(ISOWEEK FROM date) AS iso_week_number
+      FROM base
+      ORDER BY date DESC
