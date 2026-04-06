@@ -27,7 +27,7 @@ Main cloud services used:
 - `Google Compute Engine` for the Kestra VM
 - `Artifact Registry` for Docker images
 - `Google Cloud Storage` for raw files and logs
-- `BigQuery` for the analytical dataset
+- `BigQuery` for the data warehouse
 - `GitHub Actions` for image build and push automation
 
 ## Dataset and Output
@@ -157,7 +157,7 @@ Push to `main` or manually run the workflow in GitHub Actions.
 
 Create a GCE VM for Kestra. The current working setup uses:
 
-- machine type: `e2-small`
+- machine type: `e2-medium`
 - Ubuntu
 - Docker and Docker Compose installed on the VM
 
@@ -168,8 +168,8 @@ The VM service account should have at least:
 #### Step 3: clone the repo on the VM
 
 ```bash
-git clone https://github.com/<your-github-user>/<your-repo>.git
-cd ~/<your-repo>
+git clone https://github.com/nixonline/weather-data-pipeline.git
+cd ~/weather-data-pipeline
 ```
 
 #### Step 4: create the VM `.env`
@@ -191,7 +191,7 @@ KESTRA_POSTGRES_PASSWORD=replace-with-a-strong-password
 #### Step 5: start Kestra on the VM
 
 ```bash
-cd ~/<your-repo>/orchestration
+cd ~/weather-data-pipeline/orchestration
 docker compose --env-file ../.env up -d
 ```
 
@@ -225,14 +225,14 @@ When the branch gets new changes:
 3. on the VM, pull the latest repo changes:
 
 ```bash
-cd ~/<your-repo>
+cd ~/weather-data-pipeline
 git pull
 ```
 
 4. restart Kestra so flow changes reload:
 
 ```bash
-cd ~/<your-repo>/orchestration
+cd ~/weather-data-pipeline/orchestration
 docker compose --env-file ../.env restart kestra
 ```
 
