@@ -146,6 +146,14 @@ def upsert_transformed_weather_to_bq(df, table_id):
         dict with "status", "rows_inserted", "rows_deleted", and "table_id" or "error"
     """
     try:
+        if df.empty:
+            return {
+                "status": "no_data",
+                "rows_inserted": 0,
+                "rows_deleted": 0,
+                "table_id": table_id
+            }
+
         service_key_str = os.getenv("GCP_SERVICE_KEY")
         if not service_key_str:
             raise ValueError("GCP_SERVICE_KEY environment variable not set")
@@ -173,7 +181,7 @@ def upsert_transformed_weather_to_bq(df, table_id):
             """
             delete_job = client.query(delete_query)
             delete_job.result()
-            rows_deleted = delete_job.total_rows
+            rows_deleted = delete_job.num_dml_affected_rows or 0
         
         # Append new data
         job_config = bigquery.LoadJobConfig()
